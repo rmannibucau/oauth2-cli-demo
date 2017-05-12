@@ -1,5 +1,11 @@
 package com.github.rmannibucau.oauth2;
 
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleState;
+import org.apache.catalina.UserDatabase;
+import org.apache.catalina.realm.MessageDigestCredentialHandler;
+import org.apache.catalina.realm.UserDatabaseRealm;
+import org.apache.catalina.users.MemoryUserDatabase;
 import org.apache.meecrowave.Meecrowave;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -9,6 +15,8 @@ import org.tomitribe.crest.Main;
 import org.tomitribe.crest.environments.Environment;
 import org.tomitribe.crest.environments.SystemEnvironment;
 
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -19,9 +27,21 @@ import java.util.List;
 
 public class Runner {
     public static void main(final String[] args) throws IOException {
+        final UserDatabase users = new MemoryUserDatabase();
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder()
-                .user("u1", "p1")
-                .role("u1", "sudo")
+                .realm(new UserDatabaseRealm() {
+                    {
+                        database = users;
+                    }
+
+                    @Override
+                    protected void startInternal() throws LifecycleException {
+                        if (getCredentialHandler() == null) {
+                            setCredentialHandler(new MessageDigestCredentialHandler());
+                        }
+                        setState(LifecycleState.STARTING);
+                    }
+                })
                 .property("oauth2-client-force", "true"))) {
             // start the server
             meecrowave.bake();
@@ -43,6 +63,15 @@ public class Runner {
                 @Override
                 public InputStream getInput() {
                     return terminal.input();
+                }
+
+                @Override
+                public <T> T findService(final Class<T> type) {
+                    if (UserDatabase.class == type) {
+                        return type.cast(users);
+                    }
+                    final BeanManager bm = CDI.current().getBeanManager();
+                    return type.cast(bm.getReference(bm.resolve(bm.getBeans(type)), type, bm.createCreationalContext(null)));
                 }
             });
             String line;

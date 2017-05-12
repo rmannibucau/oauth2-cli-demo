@@ -15,12 +15,12 @@ import java.net.URISyntaxException;
 
 @Command("client")
 public class ClientCommands {
-    @Command("create")
-    public static void createClient(@Option("client-id") final String clientId,
-                                    @Option("client-secret") final String clientSecret,
-                                    @Option("confidential") @Default("true") final boolean confidential,
-                                    @Option("application-name") final String appName,
-                                    @Option("application-web-uri") final String webUri) throws URISyntaxException {
+    @Command
+    public static void create(@Option("client-id") final String clientId,
+                              @Option("client-secret") final String clientSecret,
+                              @Option("confidential") @Default("true") final boolean confidential,
+                              @Option("application-name") final String appName,
+                              @Option("application-web-uri") final String webUri) throws URISyntaxException {
         final Client client = new Client(clientId, clientSecret, confidential, appName, webUri);
         getClients().put(clientId, client);
     }
