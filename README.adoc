@@ -1,0 +1,25 @@
+= Basic cli to make easier to test oauth2
+
+Before any request do:
+
+[source,bash]
+----
+> client create --client-id=c1 --client-secret=cs --confidential
+----
+
+Once created you can use it with the default user provisionned with startup:
+
+[source,bash]
+----
+$ curl -v -XPOST http://localhost:8080/oauth2/token \
+    -d grant_type=password \
+    -d username=u1 -d password=p1 \
+    -d client_id=c1 -d client_secret=cs
+----
+
+You should get a token like:
+
+[source]
+----
+{"access_token":"9121b379ca419d99259e9af9eae32f41","token_type":"Bearer","expires_in":3600,"scope":"refreshToken","refresh_token":"09e3d9ba60273eac49771e75f606d"}
+----
